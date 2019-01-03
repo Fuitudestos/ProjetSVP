@@ -1,0 +1,95 @@
+DIGEST a34e81934535581a65e3e571847c9181
+Fbcv.abstract_correct
+R15:25 Coq.Structures.OrderedType <> <> lib
+R27:39 Coq.Structures.OrderedTypeEx <> <> lib
+R41:54 Coq.Structures.OrderedTypeAlt <> <> lib
+R56:68 Coq.Structures.DecidableType <> <> lib
+R70:84 Coq.Structures.DecidableTypeEx <> <> lib
+R102:116 Coq.Classes.RelationClasses <> <> lib
+R134:137 Coq.Lists.List <> <> lib
+R139:155 bcv.LibHypsNaming <> <> lib
+R157:163 bcv.lib <> <> lib
+R218:225 bcv.heritage <> <> lib
+R227:229 bcv.lib <> <> lib
+R231:236 bcv.vmtype <> <> lib
+R238:240 bcv.dvm <> <> lib
+R242:244 bcv.avm <> <> lib
+R277:281 bcv.heritage Herit <> mod
+mod 255:272 <> Abstraite_correcte
+R299:299 bcv.dvm D <> modtype
+R301:301 bcv.abstract_correct H <> modtype
+mod 295:295 <> Abstraite_correcte.D
+R318:318 bcv.avm A <> modtype
+R320:320 bcv.abstract_correct H <> modtype
+mod 314:314 <> Abstraite_correcte.A
+syndef 931:944 Abstraite_correcte abstract_value
+R949:953 bcv.abstract_correct Abstraite_correcte v2t defax
+def 970:982 Abstraite_correcte abstract_regs
+R989:999 bcv.abstract_correct Abstraite_correcte Registers syndef
+R1004:1011 bcv.lib Dico map def
+R1028:1030 bcv.abstract_correct <> rgs var
+R1013:1026 bcv.abstract_correct Abstraite_correcte abstract_value syndef
+def 1047:1060 Abstraite_correcte abstract_stack
+R1066:1072 bcv.abstract_correct Abstraite_correcte Stack syndef
+R1077:1084 Coq.Lists.List <> map def
+R1101:1102 bcv.abstract_correct <> st var
+R1086:1099 bcv.abstract_correct Abstraite_correcte abstract_value syndef
+def 1119:1132 Abstraite_correcte abstract_state
+R1137:1143 bcv.abstract_correct Abstraite_correcte State rec
+R1148:1154 bcv.abstract_correct Abstraite_correcte State rec
+R1184:1355 bcv.abstract_correct Abstraite_correcte Build_Frame constr
+R1353:1354 bcv.abstract_correct Abstraite_correcte pc proj
+R1345:1349 bcv.abstract_correct Abstraite_correcte frame proj
+R1342:1342 bcv.abstract_correct <> s var
+R1289:1302 bcv.abstract_correct Abstraite_correcte abstract_stack def
+R1316:1320 bcv.abstract_correct Abstraite_correcte stack proj
+R1308:1312 bcv.abstract_correct Abstraite_correcte frame proj
+R1305:1305 bcv.abstract_correct <> s var
+R1233:1245 bcv.abstract_correct Abstraite_correcte abstract_regs def
+R1259:1262 bcv.abstract_correct Abstraite_correcte regs proj
+R1251:1255 bcv.abstract_correct Abstraite_correcte frame proj
+R1248:1248 bcv.abstract_correct <> s var
+R1205:1208 bcv.abstract_correct Abstraite_correcte mdef proj
+R1197:1201 bcv.abstract_correct Abstraite_correcte frame proj
+R1194:1194 bcv.abstract_correct <> s var
+R1370:1439 bcv.abstract_correct Abstraite_correcte Build_State constr
+R1430:1439 bcv.lib Dico empty def
+R1408:1410 Coq.Init.Datatypes <> nil constr
+R1381:1382 bcv.abstract_correct <> fr var
+syndef 1520:1537 Abstraite_correcte abstract_opt_value
+R1543:1552 Coq.Init.Datatypes <> option_map def
+R1554:1556 bcv.abstract_correct Abstraite_correcte v2t defax
+syndef 1573:1590 Abstraite_correcte abstract_opt_state
+R1595:1604 Coq.Init.Datatypes <> option_map def
+R1606:1619 bcv.abstract_correct Abstraite_correcte abstract_state def
+prf 1714:1718 Abstraite_correcte pc_ok
+R1748:1750 Coq.Init.Logic <> :type_scope:x_'='_x not
+R1745:1746 bcv.abstract_correct Abstraite_correcte pc proj
+R1736:1740 bcv.abstract_correct Abstraite_correcte frame proj
+R1733:1733 bcv.abstract_correct <> s var
+R1781:1784 bcv.abstract_correct Abstraite_correcte pc proj
+R1752:1758 bcv.abstract_correct Abstraite_correcte frame proj
+R1761:1774 bcv.abstract_correct Abstraite_correcte abstract_state def
+R1776:1776 bcv.abstract_correct <> s var
+prf 1838:1844 Abstraite_correcte mdef_ok
+R1874:1876 Coq.Init.Logic <> :type_scope:x_'='_x not
+R1857:1862 bcv.abstract_correct Abstraite_correcte mdef proj
+R1867:1871 bcv.abstract_correct Abstraite_correcte frame proj
+R1864:1864 bcv.abstract_correct <> s var
+R1877:1882 bcv.abstract_correct Abstraite_correcte mdef proj
+R1884:1890 bcv.abstract_correct Abstraite_correcte frame proj
+R1892:1905 bcv.abstract_correct Abstraite_correcte abstract_state def
+R1907:1907 bcv.abstract_correct <> s var
+prf 2020:2035 Abstraite_correcte find_abstract_ok
+R2095:2102 Coq.Init.Logic <> :type_scope:x_'='_x not
+R2061:2069 bcv.lib Dico find def
+R2077:2089 bcv.abstract_correct Abstraite_correcte abstract_regs def
+R2091:2093 bcv.abstract_correct <> rgs var
+R2071:2074 bcv.abstract_correct <> ridx var
+R2103:2120 bcv.abstract_correct Abstraite_correcte abstract_opt_value syndef
+R2123:2131 bcv.lib Dico find def
+R2138:2140 bcv.abstract_correct <> rgs var
+R2133:2136 bcv.abstract_correct <> ridx var
+R2184:2197 bcv.lib Dicomore map_o thm
+R2184:2197 bcv.lib Dicomore map_o thm
+R2446:2463 bcv.abstract_correct Abstraite_correcte <> mod
