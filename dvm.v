@@ -147,47 +147,50 @@ Function new (clid:class_id) (heap:Heap) : option (heap_idx * Heap) :=
 
       | Iload ridx =>
         match Dico.find ridx (s.(frame).(regs)) with
-        | Some i =>
+        | Some (Vint i) =>
           Some {| framestack := s.(framestack); heap := s.(heap);
                   frame := {| mdef:=s.(frame).(mdef); regs:= s.(frame).(regs);
                               pc:= pc + 1;
-                              stack:= i :: s.(frame).(stack)
+                              stack:= Vint i :: s.(frame).(stack)
                            |}
                |}
+        | Some _ (** Invalid register content *)
         | None => None (** Bad register number *)
         end
 
       | Rload clid ridx =>
         match Dico.find ridx (s.(frame).(regs)) with
-        | Some r =>
+        | Some (Vref r) =>
           Some {| framestack := s.(framestack); heap := s.(heap);
                   frame := {| mdef:=s.(frame).(mdef) ; regs:= s.(frame).(regs);
                               pc:= pc + 1;
-                              stack:= r :: s.(frame).(stack)
+                              stack:= Vref r :: s.(frame).(stack)
                            |}
                |}
+        | Some _ (** Invalid register content *)
         | None => None (** Bad register number *)
         end
 
       | Istore ridx =>
         match s.(frame).(stack) with
-        | i :: stack' =>
-          Some {| framestack := s.(framestack); heap := s.(heap);
-                  frame := {| mdef:=s.(frame).(mdef) ;
-                              regs:= Dico.add ridx i (s.(frame).(regs));
-                              pc:= pc + 1;
-                              stack:= stack'
-                           |}
-               |}
-        | nil => None (** Stack underflow *)
-        end
-
-      | Rstore clid ridx =>
-        match s.(frame).(stack) with
         | Vint i :: stack' =>
           Some {| framestack := s.(framestack); heap := s.(heap);
                   frame := {| mdef:=s.(frame).(mdef) ;
                               regs:= Dico.add ridx (Vint i) (s.(frame).(regs));
+                              pc:= pc + 1;
+                              stack:= stack'
+                           |}
+               |}
+        | nil
+        | _ => None (** Stack underflow *)
+        end
+
+      | Rstore clid ridx =>
+        match s.(frame).(stack) with
+        | Vref r :: stack' =>
+          Some {| framestack := s.(framestack); heap := s.(heap);
+                  frame := {| mdef:=s.(frame).(mdef) ;
+                              regs:= Dico.add ridx (Vref r) (s.(frame).(regs));
                               pc:= pc + 1;
                               stack:= stack'
                            |}
