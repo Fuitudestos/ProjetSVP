@@ -19,7 +19,7 @@ Set Printing Projections.
 
 
 Require Omega.
-Require Import OrderedType OrderedTypeEx OrderedTypeAlt DecidableType DecidableTypeEx.
+Require Import OrderedType OrderedTypeEx OrderedTypeAlt DecidableType DecidableTypeEx FunInd.
 From bcv Require Import LibHypsNaming heritage vmtype vmdefinition.
 
 (** * Valeurs manipulée par la machine défensive,
