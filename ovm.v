@@ -16,7 +16,7 @@
 
 
 Require Import OrderedType OrderedTypeEx OrderedTypeAlt DecidableType
-        DecidableTypeEx RelationClasses Omega.
+        DecidableTypeEx RelationClasses Omega FunInd.
 From bcv Require Import LibHypsNaming heritage vmtype vmdefinition.
 
 

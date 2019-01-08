@@ -1,5 +1,5 @@
 From bcv Require Import heritage vmtype vmdefinition  LibHypsNaming.
-Require Import List.
+Require Import List FunInd.
 Import ListNotations.
 
 (** * Valeurs de la machine abstraite
