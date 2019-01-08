@@ -110,8 +110,7 @@ destruct i.
   intros.
   inversion H. clear H. subst.
   apply O.state_eq_C.
-  apply O.frame_eq_C; cbn; reflexivity.
-    +reflexivity.
+  apply O.frame_eq_C; try now reflexivity.
     +reflexivity.
     +reflexivity.
   -destruct (stack (frame s)) eqn:stack_S; try now inversion H2.
@@ -140,4 +139,51 @@ destruct i.
     inversion H2. clear H2.
     intros.
     destruct (FIND ridx (O.regs (O.frame (offensive_state s)))) eqn:heq2; try now inversion H.
+    inversion H. subst.
+    apply O.state_eq_C; try now reflexivity.
+      *apply O.frame_eq_C; try now reflexivity.
+      simpl. unfold offensive_state in heq2.
+      simpl in heq2.
+      unfold offensive_regs in heq2.
+      rewrite Dicomore.map_o in heq2.
+      unfold DefVal.Val in *.
+      rewrite heq1 in heq2.
+      simpl in heq2.
+      inversion heq2.
+      reflexivity.
+    +inversion H2.
+  -destruct (FIND ridx (regs (frame s))) eqn:heq1; try now inversion H.
+    +unfold O.exec_step.
+    rewrite pc_ok in heq.
+    rewrite mdef_ok in heq.
+    subst os.
+    rewrite heq.
+    inversion H2. clear H2.
+    intros.
+    destruct (FIND ridx (O.regs (O.frame (offensive_state s)))) eqn:heq2; try now inversion H.
+    inversion H. subst.
+    apply O.state_eq_C; try now reflexivity.
+      *apply O.frame_eq_C; try now reflexivity.
+      simpl. unfold offensive_state in heq2.
+      simpl in heq2.
+      unfold offensive_regs in heq2.
+      rewrite Dicomore.map_o in heq2.
+      unfold DefVal.Val in *.
+      rewrite heq1 in heq2.
+      simpl in heq2.
+      inversion heq2.
+      reflexivity.
+  -destruct (stack (frame s)) eqn:heq1; try now inversion H.
+    +unfold O.exec_step.
+    rewrite pc_ok in heq.
+    rewrite mdef_ok in heq.
+    subst os.
+    rewrite heq.
+    inversion H2. clear H2.
+    intros.
+    destruct (O.stack (O.frame (offensive_state s))) eqn:heq2; try now inversion H.
+    inversion H. subst.
+    apply O.state_eq_C; try now reflexivity.
+    *apply O.frame_eq_C; try now reflexivity.
+      **simpl. 
 End Offensive_correcte.
