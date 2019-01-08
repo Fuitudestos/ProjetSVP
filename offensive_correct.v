@@ -1,5 +1,5 @@
 Require Import OrderedType OrderedTypeEx OrderedTypeAlt DecidableType DecidableTypeEx.
-Require Import RelationClasses.
+Require Import RelationClasses FunInd.
 From bcv Require Import vmtype dvm ovm.
 Require bcv.heritage.
 
@@ -58,6 +58,14 @@ Module Offensive_correcte (H:heritage.Herit).
     destruct s;simpl;reflexivity.
   Qed.
 
+  Lemma stack_ok: forall s, map d2o (D.stack(s.(D.frame))) = O.stack(O.frame(offensive_state s)).
+  Proof.
+    destruct s;simpl.
+    induction (D.stack frame).
+    - easy.
+    - apply map_cons.
+  Qed.
+
   Definition d2o_opt := option_map d2o.
 
 
@@ -96,46 +104,34 @@ Module Offensive_correcte (H:heritage.Herit).
       O.exec_step os = Some os'' -> 
       O.state_eq os' os''.
   Proof.
-  
-intros s s' os os' os'' H H0 H2.
-unfold exec_step in H2.
-destruct (FIND (pc (frame s)) (instrs (mdef (frame s)))) eqn:heq.
-destruct i.
-  -unfold O.exec_step.
-  rewrite pc_ok in heq.
-  rewrite mdef_ok in heq.
-  subst os.
-  rewrite heq.
-  inversion H2. clear H2.
-  intros.
-  inversion H. clear H. subst.
-  apply O.state_eq_C.
-  apply O.frame_eq_C; try now reflexivity.
-    +reflexivity.
-    +reflexivity.
-  -destruct (stack (frame s)) eqn:stack_S; try now inversion H2.
-    + destruct d; try now (destruct l; inversion H2).
-      destruct l; try now inversion H2.
-      destruct d; try now inversion H2.
-      unfold O.exec_step.
-      rewrite pc_ok in heq.
-      rewrite mdef_ok in heq.
-      subst os.
-      rewrite heq.
-      inversion H2. clear H2.
-      intros.
-      destruct (O.stack (O.frame (offensive_state s))) eqn:heq_stack; try now inversion H.
-      destruct l0; try now inversion H. 
-      inversion heq_stack.
-      rewrite stack_S in H3; simpl in H3.
-      inversion H3.
-      apply O.state_eq_C; inversion H; subst; try reflexivity.
-  -destruct (FIND ridx (regs (frame s))) eqn:heq1; try now inversion 2.
-    +unfold O.exec_step.
-    rewrite pc_ok in heq.
-    rewrite mdef_ok in heq.
+
+
+    intros s s' os os' os'' Hos Hos' Hd Ho.
+    unfold O.exec_step in Ho; cbn in Ho.
     subst os.
-    rewrite heq.
+    rewrite <- pc_ok in Ho.
+    rewrite <- mdef_ok in Ho.
+    rewrite <- stack_ok in Ho.
+
+    functional induction (D.exec_step s)
+    ; try discriminate Hd
+    ; rewrite e in Ho
+    ; try rewrite find_offensive_ok in Ho
+    ; try rewrite e1 in Ho
+    ; inversion Hd ; clear Hd; subst s'
+    ; unfold offensive_state in Hos'; cbn in Hos'; subst os'
+    ; cbn in Ho; inversion Ho; clear Ho
+    ; try (apply O.state_eq_C; cbn; [apply O.frame_eq_C| |apply O.heap_eq_C];cbn;easy).
+
+    (* TODO here *)
+
+    - apply O.state_eq_C; cbn.
+      + apply O.frame_eq_C; cbn.
+
+
+
+      destruct (FIND ridx (regs (frame s))) eqn:heq1; try now inversion 2.
+    +unfold O.exec_step.
     inversion H2. clear H2.
     intros.
     destruct (FIND ridx (O.regs (O.frame (offensive_state s)))) eqn:heq2; try now inversion H.
@@ -152,6 +148,7 @@ destruct i.
       inversion heq2.
       reflexivity.
     +inversion H2.
+
   -destruct (FIND ridx (regs (frame s))) eqn:heq1; try now inversion H.
     +unfold O.exec_step.
     rewrite pc_ok in heq.
@@ -185,5 +182,7 @@ destruct i.
     inversion H. subst.
     apply O.state_eq_C; try now reflexivity.
     *apply O.frame_eq_C; try now reflexivity.
-      **simpl. 
+     **simpl.
+       unfold offensive_regs.
+       Abort.
 End Offensive_correcte.
