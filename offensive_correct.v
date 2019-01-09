@@ -12,7 +12,7 @@ Module Offensive_correcte (H:heritage.Herit).
   le tag de type,et on met zéro là où il n'y a pas de valeur, de toute
   façon si le bcv est correct et accepte une applet, ces valeurs
   n'apparaitront jamais. *)
-  Definition d2o (v:DefVal.Val): OffVal.Val :=
+  Definition d2o (v:DefVal.DVal): OffVal.Val :=
     match v with
       | DefVal.Vint i => i
       | DefVal.Vref (_,i) => i
@@ -31,13 +31,14 @@ Module Offensive_correcte (H:heritage.Herit).
     Dico.map (fun obj =>
                 {| O.objclass:= obj.(D.objclass) ; O.objfields := Dico.map d2o (obj.(D.objfields)) |}) hp.
 
-  Definition offensive_state (s:D.State) : O.State :=
-    let fr :=
-        {| O.mdef := s.(D.frame).(D.mdef);
-           O.regs := offensive_regs (s.(D.frame).(D.regs));
-           O.stack := offensive_stack (s.(D.frame).(D.stack));
-           O.pc:=s.(D.frame).(D.pc) |} in
-    {| O.frame := fr;
+   Definition offensive_frame (f:D.Frame) : O.Frame :=
+     {| O.mdef := f.(D.mdef);
+        O.regs := offensive_regs (f.(D.regs));
+        O.stack := offensive_stack (f.(D.stack));
+        O.pc := f.(D.pc) |}.
+
+ Definition offensive_state (s:D.State) : O.State :=
+    {| O.frame := offensive_frame (s.(D.frame));
        O.framestack := nil;
        O.heap := offensive_heap s.(D.heap) |}.
 
@@ -58,12 +59,27 @@ Module Offensive_correcte (H:heritage.Herit).
     destruct s;simpl;reflexivity.
   Qed.
 
-  Lemma stack_ok: forall s, map d2o (D.stack(s.(D.frame))) = O.stack(O.frame(offensive_state s)).
+  Lemma regs_ok: forall s, offensive_regs (D.regs(D.frame(s))) = O.regs(O.frame(offensive_state s)).
+  Proof.
+    destruct s;cbn; reflexivity.
+  Qed.
+
+  Lemma stack_ok: forall s, offensive_stack (D.stack(s.(D.frame))) = O.stack(O.frame(offensive_state s)).
   Proof.
     destruct s;simpl.
     induction (D.stack frame).
     - easy.
     - apply map_cons.
+  Qed.
+
+  Lemma heap_ok: forall s, offensive_heap (D.heap(s)) = O.heap(offensive_state s).
+  Proof.
+    destruct s;cbn; reflexivity.
+  Qed.
+
+  Lemma frame_ok: forall s, offensive_frame (s.(D.frame)) = (O.frame (offensive_state s)).
+  Proof.
+    destruct s;cbn; reflexivity.
   Qed.
 
   Definition d2o_opt := option_map d2o.
@@ -111,78 +127,25 @@ Module Offensive_correcte (H:heritage.Herit).
     subst os.
     rewrite <- pc_ok in Ho.
     rewrite <- mdef_ok in Ho.
+    rewrite <- regs_ok in Ho.
     rewrite <- stack_ok in Ho.
+    rewrite <- heap_ok in Ho.
 
     functional induction (D.exec_step s)
     ; try discriminate Hd
     ; rewrite e in Ho
     ; try rewrite find_offensive_ok in Ho
     ; try rewrite e1 in Ho
-    ; inversion Hd ; clear Hd; subst s'
+    ; inversion Hd ; clear Hd ; subst s'
     ; unfold offensive_state in Hos'; cbn in Hos'; subst os'
-    ; cbn in Ho; inversion Ho; clear Ho
-    ; try (apply O.state_eq_C; cbn; [apply O.frame_eq_C| |apply O.heap_eq_C];cbn;easy).
-
+    ; cbn in Ho; inversion Ho; clear Ho; rename H0 into Ho
+    ; try subst os'';cbn
+    ; try (apply O.state_eq_C
+           ; cbn
+           ; [apply O.frame_eq_C| |apply O.heap_eq_C]
+           ;cbn
+           ;try apply Dicomore.add_map
+           ;easy).
     (* TODO here *)
 
-    - apply O.state_eq_C; cbn.
-      + apply O.frame_eq_C; cbn.
-
-
-
-      destruct (FIND ridx (regs (frame s))) eqn:heq1; try now inversion 2.
-    +unfold O.exec_step.
-    inversion H2. clear H2.
-    intros.
-    destruct (FIND ridx (O.regs (O.frame (offensive_state s)))) eqn:heq2; try now inversion H.
-    inversion H. subst.
-    apply O.state_eq_C; try now reflexivity.
-      *apply O.frame_eq_C; try now reflexivity.
-      simpl. unfold offensive_state in heq2.
-      simpl in heq2.
-      unfold offensive_regs in heq2.
-      rewrite Dicomore.map_o in heq2.
-      unfold DefVal.Val in *.
-      rewrite heq1 in heq2.
-      simpl in heq2.
-      inversion heq2.
-      reflexivity.
-    +inversion H2.
-
-  -destruct (FIND ridx (regs (frame s))) eqn:heq1; try now inversion H.
-    +unfold O.exec_step.
-    rewrite pc_ok in heq.
-    rewrite mdef_ok in heq.
-    subst os.
-    rewrite heq.
-    inversion H2. clear H2.
-    intros.
-    destruct (FIND ridx (O.regs (O.frame (offensive_state s)))) eqn:heq2; try now inversion H.
-    inversion H. subst.
-    apply O.state_eq_C; try now reflexivity.
-      *apply O.frame_eq_C; try now reflexivity.
-      simpl. unfold offensive_state in heq2.
-      simpl in heq2.
-      unfold offensive_regs in heq2.
-      rewrite Dicomore.map_o in heq2.
-      unfold DefVal.Val in *.
-      rewrite heq1 in heq2.
-      simpl in heq2.
-      inversion heq2.
-      reflexivity.
-  -destruct (stack (frame s)) eqn:heq1; try now inversion H.
-    +unfold O.exec_step.
-    rewrite pc_ok in heq.
-    rewrite mdef_ok in heq.
-    subst os.
-    rewrite heq.
-    inversion H2. clear H2.
-    intros.
-    destruct (O.stack (O.frame (offensive_state s))) eqn:heq2; try now inversion H.
-    inversion H. subst.
-    apply O.state_eq_C; try now reflexivity.
-    *apply O.frame_eq_C; try now reflexivity.
-     **simpl.
-       unfold offensive_regs.
-       Abort.
 End Offensive_correcte.
