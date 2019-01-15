@@ -138,7 +138,9 @@ Module Offensive_correcte (H:heritage.Herit).
     ; try rewrite e1 in Ho
     ; inversion Hd ; clear Hd ; subst s'
     ; unfold offensive_state in Hos'; cbn in Hos'; subst os'
-    ; cbn in Ho; inversion Ho; clear Ho; rename H0 into Ho
+
+    ; try (destruct _x; induction h) ; cbn in Ho; inversion Ho; clear Ho; rename H0 into Ho
+
     ; try subst os'';cbn
     ; try (apply O.state_eq_C
            ; cbn
