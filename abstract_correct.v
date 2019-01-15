@@ -70,16 +70,25 @@ Module Abstraite_correcte (H:Herit).
     apply Dicomore.map_o.
   Qed.
 
+  (* TODO safe should handle heap *)
+  Definition safe (s:D.State): Prop := True.
 
-  
+  (* FIXME? I don't know if that's correct *)
+  Fixpoint Incompat (s:option A.State) (ss:list (option A.State)) : Prop :=
+    match s with
+    | None => False
+    | st => match ss with
+           | [] => False
+           | h::t => (st = h) \/ (Incompat st t)
+           end
+    end.
 
-   (*PREUVE DE COMMUTATION:
+   (* PREUVE DE COMMUTATION: TODO *)
    Lemma abstract_ok_final : forall(s s':D.State),
       safe s -> D.exec_step s = Some s' -> 
       safe s'
       /\ Incompat (Some (abstract_state s')) (A.exec_step (abstract_state s)).
-   *)
-   
+   Admitted.
 
 
 
