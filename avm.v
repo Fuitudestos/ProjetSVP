@@ -34,9 +34,153 @@ Module A (Import H:Herit).
 
 (** * Exécution de la machine défensive.
    Pas de vérif de overflow. pas de nb négatifs. *)
-  Function exec_step (s:State): list (option State) :=
-    []. (* FAUX. À REMPLIR *) 
+  Definition exec_step (s:State): list (option State) :=
+    let frm:Frame := s.(frame) in
+    let pc: pc_idx := frm.(pc) in
+    let instr_opt := Dico.find pc (frm.(mdef).(instrs)) in
+    match instr_opt with
+    | None => [None]
+    | Some instr =>
+      match instr with
+      | ret => [Some s]
+      | Iconst i =>
+        [Some {| framestack := s.(framestack); heap := s.(heap);
+                frame := {| mdef:=s.(frame).(mdef) ; regs:= s.(frame).(regs);
+                            pc:= pc + 1;
+                            stack:= Tint :: s.(frame).(stack)
+                         |}
+             |}]
+      | Iadd =>
+        match s.(frame).(stack) with
+        | Tint :: Tint :: stack' =>
+          [Some  {| framestack := s.(framestack); heap := s.(heap);
+                  frame := {| mdef:=s.(frame).(mdef); regs:= s.(frame).(regs);
+                              pc:= pc + 1;
+                              stack:= Tint :: stack'
+                           |}
+               |} ]
+         | nil | _ :: nil => [None]
+         | _ :: _ => [None]
+        end
 
+      | Iload ridx =>
+        match Dico.find ridx (s.(frame).(regs)) with
+        | Some Tint =>
+          [Some {| framestack := s.(framestack); heap := s.(heap);
+                  frame := {| mdef:=s.(frame).(mdef); regs:= s.(frame).(regs);
+                              pc:= pc + 1;
+                              stack:= Tint :: s.(frame).(stack)
+                           |}
+               |}]
+        | Some _ (** Invalid register content *)
+        | None => [None] (** Bad register number *)
+        end
+
+      | Rload clid ridx =>
+        match Dico.find ridx (s.(frame).(regs)) with
+        | Some (Tref r) =>
+          [Some {| framestack := s.(framestack); heap := s.(heap);
+                  frame := {| mdef:=s.(frame).(mdef) ; regs:= s.(frame).(regs);
+                              pc:= pc + 1;
+                              stack:= Tref r :: s.(frame).(stack)
+                           |}
+               |}]
+        | Some _ (** Invalid register content *)
+        | None => [None] (** Bad register number *)
+        end
+
+      | Istore ridx =>
+        match s.(frame).(stack) with
+        | Tint :: stack' =>
+          [Some {| framestack := s.(framestack); heap := s.(heap);
+                  frame := {| mdef:=s.(frame).(mdef) ;
+                              regs:= Dico.add ridx Tint (s.(frame).(regs));
+                              pc:= pc + 1;
+                              stack:= stack'
+                           |}
+               |}]
+        | nil
+        | _ => [None] (** Stack underflow *)
+        end
+
+      | Rstore clid ridx =>
+        match s.(frame).(stack) with
+        | Tref r :: stack' =>
+          [Some {| framestack := s.(framestack); heap := s.(heap);
+                  frame := {| mdef:=s.(frame).(mdef) ;
+                              regs:= Dico.add ridx (Tref r) (s.(frame).(regs));
+                              pc:= pc + 1;
+                              stack:= stack'
+                           |}
+               |}]
+        | nil => [None] (** Stack underflow *)
+        | _ => [None]
+        end
+
+      | Iifle jmp => (** ifeqe *)
+        match s.(frame).(stack) with
+        | Tint :: stack' => (** = 0  --> jump *)
+          [Some {| framestack := s.(framestack); heap := s.(heap);
+                  frame := {| mdef:=s.(frame).(mdef) ; regs:= s.(frame).(regs);
+                              pc:= jmp;
+                              stack:= stack'
+                           |}
+                |}
+          ; Some {| framestack := s.(framestack); heap := s.(heap);
+                  frame := {| mdef:=s.(frame).(mdef) ; regs:= s.(frame).(regs);
+                              pc:= pc+1;
+                              stack:= stack'
+                           |}
+                 |}]
+        | _ :: _ | nil => [None] (** Stack underflow *)
+        end
+
+      | Goto jmp =>
+        [Some {| framestack := s.(framestack); heap := s.(heap);
+                frame := {| mdef:=s.(frame).(mdef) ; regs:= s.(frame).(regs);
+                            stack:= s.(frame).(stack);
+                            pc:= jmp
+                         |}
+             |}]
+
+      | Getfield cl namefld typ =>
+        match s.(frame).(stack) with
+        | Tint :: stack' =>
+          [Some {| framestack := s.(framestack); heap := s.(heap);
+                   frame := {| mdef:=s.(frame).(mdef) ; regs:= s.(frame).(regs);
+                               pc:= pc+1;
+                               stack:= typ :: stack'
+                            |}
+                |}]
+        | nil => [None] (** Stack underflow *)
+        | _ => [None]
+        end
+
+      | Putfield cl namefld typ =>
+        match s.(frame).(stack) with
+        | Tint :: t :: stack' =>
+          [Some {| framestack := s.(framestack);
+                   heap := s.(heap);
+                   frame := {| mdef:=s.(frame).(mdef) ;
+                               regs:= s.(frame).(regs);
+                               pc:= pc+1;
+                               stack:= stack'
+                            |}
+                |}]
+        | nil | _ :: nil => [None] (** Stack underflow *)
+        | _ :: _ => [None]
+        end
+
+      | New clid =>
+          [Some {| framestack := s.(framestack); heap := s.(heap);
+                  frame := {| mdef:=s.(frame).(mdef) ; regs:= s.(frame).(regs);
+                              stack:= Tref clid :: s.(frame).(stack);
+                              pc:= pc+1
+                           |} 
+               |}]
+
+      end
+    end.
 
 (** * Tests *)
 
@@ -78,6 +222,8 @@ Module A (Import H:Herit).
   Eval simpl in exec_n startstate 1.
   Eval simpl in exec_n startstate 2.
   Eval simpl in exec_n startstate 5.
+
+  Functional Scheme exec_step_ind := Induction for exec_step Sort Prop.
 
   Lemma essai : forall s x,
     exec_step s = [ Some x ] -> 
