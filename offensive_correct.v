@@ -27,9 +27,11 @@ Module Offensive_correcte (H:heritage.Herit).
 
   Definition offensive_stack st: O.Stack := List.map d2o st.
 
+  Definition offensive_obj obj: O.Obj :=
+    {| O.objclass:= obj.(D.objclass) ; O.objfields := Dico.map d2o (obj.(D.objfields)) |}.
+
   Definition offensive_heap hp: O.Heap :=
-    Dico.map (fun obj =>
-                {| O.objclass:= obj.(D.objclass) ; O.objfields := Dico.map d2o (obj.(D.objfields)) |}) hp.
+    Dico.map offensive_obj hp.
 
    Definition offensive_frame (f:D.Frame) : O.Frame :=
      {| O.mdef := f.(D.mdef);
@@ -109,6 +111,8 @@ Module Offensive_correcte (H:heritage.Herit).
       rewrite Dicomore.map_o.    
       reflexivity.
   Qed.
+
+
   Import D.
 
   (** Diagramme de commutation entre D et O. *)
@@ -132,15 +136,16 @@ Module Offensive_correcte (H:heritage.Herit).
     rewrite <- heap_ok in Ho.
 
     functional induction (D.exec_step s)
+
     ; try discriminate Hd
     ; rewrite e in Ho
     ; try rewrite find_offensive_ok in Ho
-    ; try rewrite e1 in Ho
+    ; try rewrite e1 in Ho 
+
     ; inversion Hd ; clear Hd ; subst s'
     ; unfold offensive_state in Hos'; cbn in Hos'; subst os'
 
     ; try (destruct _x; induction h) ; cbn in Ho; inversion Ho; clear Ho; rename H0 into Ho
-
     ; try subst os'';cbn
     ; try (apply O.state_eq_C
            ; cbn
@@ -148,6 +153,8 @@ Module Offensive_correcte (H:heritage.Herit).
            ;cbn
            ;try apply Dicomore.add_map
            ;easy).
-    (* TODO here *)
 
+    admit. admit. admit.
+    (* TODO heap equivalence *)
+  Admitted.
 End Offensive_correcte.
