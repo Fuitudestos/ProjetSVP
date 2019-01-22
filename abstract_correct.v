@@ -117,6 +117,8 @@ Module Abstraite_correcte (H:Herit).
     ; try rewrite find_abstract_ok
     ; try rewrite e1
     ; cbn
+    ; try destruct r
+    ; try destruct _x
     ; try left
     ; try (apply A.state_eq_C
            ; cbn
@@ -124,7 +126,6 @@ Module Abstraite_correcte (H:Herit).
            ;cbn
            ;try apply Dicomore.add_map
            ;easy).
-
 
    Admitted.
 
