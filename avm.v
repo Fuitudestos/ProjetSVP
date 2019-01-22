@@ -132,7 +132,14 @@ Module A (Import H:Herit).
                               stack:= stack'
                            |}
                  |}]
-        | _ :: _ | nil => [None] (** Stack underflow *)
+        | _ :: stack' =>
+          [Some {| framestack := s.(framestack); heap := s.(heap);
+                   frame := {| mdef := s.(frame).(mdef); regs := s.(frame).(regs);
+                               pc := pc+1;
+                               stack := stack'
+                            |}
+           |}]
+        | nil => [None] (** Stack underflow *)
         end
 
       | Goto jmp =>

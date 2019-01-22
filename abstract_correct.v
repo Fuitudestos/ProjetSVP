@@ -1,5 +1,5 @@
 Require Import OrderedType OrderedTypeEx OrderedTypeAlt DecidableType DecidableTypeEx.
-Require Import RelationClasses.
+Require Import RelationClasses FunInd.
 Require Import List bcv.LibHypsNaming bcv.lib.
 Import ListNotations Omega.
 From bcv Require Import heritage lib vmtype dvm avm.
@@ -33,6 +33,7 @@ Module Abstraite_correcte (H:Herit).
   Notation abstract_value := D.v2t.
 
   Definition abstract_regs rgs: A.Registers := Dico.map abstract_value rgs.
+  Arguments abstract_regs rgs : simpl never.
 
   Definition abstract_stack st: A.Stack := List.map abstract_value st.
 
@@ -61,9 +62,14 @@ Module Abstraite_correcte (H:Herit).
     destruct s;simpl;reflexivity.
   Qed.
 
+  Lemma regs_ok: forall s, abstract_regs (regs (frame s)) = A.regs(A.frame(abstract_state s)).
+  Proof.
+    destruct s;simpl;reflexivity.
+  Qed.
+
   (* commutation de find et abstract_ot_value *)
   Lemma find_abstract_ok : forall rgs ridx, 
-    Dico.find ridx (abstract_regs rgs) 
+    Dico.find ridx (Dico.map abstract_value rgs)
     = abstract_opt_value (Dico.find ridx rgs).
   Proof.
     intros rgs ridx.
@@ -77,10 +83,11 @@ Module Abstraite_correcte (H:Herit).
   Fixpoint Incompat (s:option A.State) (ss:list (option A.State)) : Prop :=
     match s with
     | None => False
-    | st => match ss with
-           | [] => False
-           | h::t => (st = h) \/ (Incompat st t)
-           end
+    | Some st => match ss with
+                | [] => False
+                | None::t => False
+                | Some h::t => A.state_eq st h \/ (Incompat (Some st) t)
+                end
     end.
 
    (* PREUVE DE COMMUTATION: TODO *)
@@ -88,6 +95,37 @@ Module Abstraite_correcte (H:Herit).
       safe s -> D.exec_step s = Some s' -> 
       safe s'
       /\ Incompat (Some (abstract_state s')) (A.exec_step (abstract_state s)).
+   Proof.
+
+    intros s s' sfs Ha.
+    unfold D.exec_step in Ha; cbn in Ha.
+    try rewrite <- pc_ok in Ha.
+    try rewrite <- mdef_ok in Ha.
+    try rewrite <- regs_ok in Ha.
+
+    functional induction (D.exec_step s)
+    ; rewrite e in Ha
+    ; try rewrite find_abstract_ok in Ha
+    ; try rewrite e1 in Ha
+    ; try (inversion Ha ; clear Ha ; subst s')
+    ; (split;[easy|])
+    ; unfold abstract_state
+    ; unfold A.exec_step
+    ; cbn
+    ; try rewrite <- regs_ok
+    ; try rewrite e
+    ; try rewrite find_abstract_ok
+    ; try rewrite e1
+    ; cbn
+    ; try left
+    ; try (apply A.state_eq_C
+           ; cbn
+           ; [apply A.frame_eq_C| |apply A.heap_eq_C]
+           ;cbn
+           ;try apply Dicomore.add_map
+           ;easy).
+
+
    Admitted.
 
 
