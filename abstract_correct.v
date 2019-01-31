@@ -77,7 +77,45 @@ Module Abstraite_correcte (H:Herit).
   Qed.
 
   (* TODO safe should handle heap *)
-  Definition safe (s:D.State): Prop := True.
+  Definition safe (s:D.State): Prop :=
+
+    let safeinstr instr cl fidx v :=
+        match instr with
+        | Getfield cl' fidx' typ' => cl = cl' /\ fidx = fidx' -> abstract_value v = typ'
+        | Putfield cl' fidx' typ' => cl = cl' /\ fidx = fidx' -> abstract_value v = typ'
+        | _ => True
+        end
+    in
+
+    let safefld cl idx v :=
+        Forall
+          (fun (i: Dico.key * Instr) => let (_,instr) := i in safeinstr instr cl idx v)
+          (Dico.elements (s.(frame).(mdef).(instrs)))
+    in
+
+    let safeobj o :=
+        Forall
+          (fun (fld: Dico.key * DVal) => let (idx,v) := fld in safefld (o.(objclass)) idx v)
+          (Dico.elements (o.(objfields)))
+    in
+
+    (* forall (i:Instr), safe' i *)
+
+    Forall
+      (fun (x: Dico.key * Obj) => let (_,o) := x in safeobj o)
+      (Dico.elements (s.(heap)))
+
+  (*   let frm:Frame := s.(frame) in *)
+  (*   let pc: pc_idx := frm.(pc) in *)
+  (*   let instr_opt := Dico.find pc (frm.(mdef).(instrs)) in *)
+  (*   match instr_opt with *)
+  (*   | None => False *)
+  (*   | Some instr => safe' instr *)
+  (*   end *)
+
+  .
+
+
 
   (* FIXME? I don't know if that's correct *)
   Fixpoint Incompat (s:option A.State) (ss:list (option A.State)) : Prop :=
@@ -107,8 +145,13 @@ Module Abstraite_correcte (H:Herit).
     ; rewrite e in Ha
     ; try rewrite find_abstract_ok in Ha
     ; try rewrite e1 in Ha
+    ; try rewrite e2 in Ha
+    ; try rewrite e3 in Ha
+    ; try rewrite e4 in Ha
+    ; try rewrite e5 in Ha
     ; try (inversion Ha ; clear Ha ; subst s')
-    ; (split;[easy|])
+
+    ; (split;[try apply sfs|])
     ; unfold abstract_state
     ; unfold A.exec_step
     ; cbn
@@ -126,6 +169,38 @@ Module Abstraite_correcte (H:Herit).
            ;cbn
            ;try apply Dicomore.add_map
            ;easy).
+    - apply A.state_eq_C
+      ; cbn
+      ; [apply A.frame_eq_C| |apply A.heap_eq_C]
+
+      ; try apply Dicomore.add_map
+      ; try easy.
+      unfold safe in sfs; cbn in sfs.
+      rewrite Forall_forall in sfs.
+
+      specialize (sfs (hpidx, {| objclass := _x1; objfields := flds |})).
+      apply Dicomore.find_mapsto_iff in e3.
+      rewrite Dicomore.elements_mapsto_iff in e3.
+      specialize (sfs e3).
+
+    split.
+    - apply sfs.
+
+      unfold safe; cbn.
+      destruct (Dico.find  (pc (frame s) + 1) (instrs (mdef (frame s)))) eqn:de1.
+      destruct (Dico.find i (heap s)) eqn:de2; cbn.
+      + case_eq i0; try easy; intros; subst.
+
+    unfold safe; cbn.
+    unfold safe in sfs; cbn in sfs.
+    split.
+    - intros instr. induction instr; try easy.
+
+    apply A.state_eq_C.
+    - apply A.frame_eq_C.
+      + easy.
+      + easy.
+      + cbn.
 
    Admitted.
 
