@@ -115,7 +115,45 @@ Module Abstraite_correcte (H:Herit).
 
   .
 
+  Lemma safe_get : forall (s:D.State) (hidx:heap_idx) (cl:class_id) (flds:Registers) (fidx:fld_idx) (typ:VMType) (pc:nat) (v: DVal),
+      safe s
+      -> FIND hidx (s.(heap)) = Some {| objclass:=cl ; objfields:=flds |}
+      -> FIND pc (s.(frame).(mdef).(instrs)) = Some (Getfield cl fidx typ)
+      -> FIND fidx flds = Some v
+      -> abstract_value v = typ.
+  Admitted.
 
+  Lemma safe_put : forall (s:D.State) (hidx:heap_idx) (cl:class_id) (flds:Registers) (fidx:fld_idx) (typ:VMType) (pcidx:nat) (v: DVal) (stack':Stack),
+      safe s
+      -> FIND hidx (s.(heap)) = Some {| objclass:=cl ; objfields:=flds |}
+      -> FIND pcidx (s.(frame).(mdef).(instrs)) = Some (Putfield cl fidx typ)
+      -> s.(frame).(stack) = Vint hidx :: v :: stack'
+      -> safe
+    {|
+    frame := {|
+             mdef := mdef (frame s);
+             regs := regs (frame s);
+             stack := stack';
+             pc := s.(frame).(pc) + 1 |};
+    framestack := framestack s;
+    heap := hidx --> {| objclass := cl; objfields := fidx --> v, flds |}, heap s |}.
+  Admitted.
+
+
+
+  Lemma hd_eq : forall (A: Type) (l: list A) (a b: A),
+      a::l = b::l <-> a = b.
+  Proof.
+    intros.
+    split; intro.
+    - rewrite <- app_nil_l with A l in H.
+      repeat rewrite app_comm_cons in H.
+      apply app_inv_tail in H.
+      rewrite <- app_nil_l with A ([a]) in H.
+      rewrite <- app_nil_l with A ([b]) in H.
+      apply app_inj_tail in H; cbn in H; easy.
+    - subst; easy.
+  Qed.
 
   (* FIXME? I don't know if that's correct *)
   Fixpoint Incompat (s:option A.State) (ss:list (option A.State)) : Prop :=
@@ -149,6 +187,7 @@ Module Abstraite_correcte (H:Herit).
     ; try rewrite e3 in Ha
     ; try rewrite e4 in Ha
     ; try rewrite e5 in Ha
+    ; try rewrite e6 in Ha
     ; try (inversion Ha ; clear Ha ; subst s')
 
     ; (split;[try apply sfs|])
@@ -166,41 +205,22 @@ Module Abstraite_correcte (H:Herit).
     ; try (apply A.state_eq_C
            ; cbn
            ; [apply A.frame_eq_C| |apply A.heap_eq_C]
-           ;cbn
-           ;try apply Dicomore.add_map
-           ;easy).
-    - apply A.state_eq_C
-      ; cbn
-      ; [apply A.frame_eq_C| |apply A.heap_eq_C]
-
-      ; try apply Dicomore.add_map
-      ; try easy.
-      unfold safe in sfs; cbn in sfs.
-      rewrite Forall_forall in sfs.
-
-      specialize (sfs (hpidx, {| objclass := _x1; objfields := flds |})).
-      apply Dicomore.find_mapsto_iff in e3.
-      rewrite Dicomore.elements_mapsto_iff in e3.
-      specialize (sfs e3).
-
-    split.
-    - apply sfs.
-
-      unfold safe; cbn.
-      destruct (Dico.find  (pc (frame s) + 1) (instrs (mdef (frame s)))) eqn:de1.
-      destruct (Dico.find i (heap s)) eqn:de2; cbn.
-      + case_eq i0; try easy; intros; subst.
-
-    unfold safe; cbn.
-    unfold safe in sfs; cbn in sfs.
-    split.
-    - intros instr. induction instr; try easy.
-
-    apply A.state_eq_C.
-    - apply A.frame_eq_C.
-      + easy.
-      + easy.
-      + cbn.
+           ; cbn
+           ; try apply Dicomore.add_map
+           ; try easy
+           ; apply hd_eq
+           ; try (eapply safe_get
+                  ; [ exact sfs
+                    | exact e3
+                    | apply Nat.eqb_eq in e5; subst cl; exact e
+                    | exact e6 ]))
+    ; try (eapply safe_put
+           ; [ exact sfs
+             | apply Nat.eqb_eq in e6; subst cl; exact e4
+             | exact e
+             | exact e1 ]).
+    (* new is safe *)
+    - admit.
 
    Admitted.
 

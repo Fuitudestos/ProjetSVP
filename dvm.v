@@ -231,17 +231,19 @@ Function new (clid:class_id) (heap:Heap) : option (heap_idx * Heap) :=
         | (Vint hpidx) :: stack' =>
           match Dico.find hpidx s.(heap) with
           | None => None (** adresse inconnue *)
-          | Some {|objclass:= objcl; objfields:= flds |} => (* TODO: vérifier le type retourné? *)
-            match Dico.find namefld flds with
-            | None => None (** Champ de classe inconnu ou pas initialisé *)
-            | Some v =>
-              Some {| framestack := s.(framestack); heap := s.(heap);
-                      frame := {| mdef:=s.(frame).(mdef) ; regs:= s.(frame).(regs);
-                                  pc:= pc+1;
-                                  stack:= v :: stack'
-                               |}
-                   |}
-            end
+          | Some {|objclass:= objcl; objfields:= flds |} =>
+            if Nat.eqb objcl cl then
+              match Dico.find namefld flds with
+              | None => None (** Champ de classe inconnu ou pas initialisé *)
+              | Some v =>
+                Some {| framestack := s.(framestack); heap := s.(heap);
+                        frame := {| mdef:=s.(frame).(mdef) ; regs:= s.(frame).(regs);
+                                    pc:= pc+1;
+                                    stack:= v :: stack'
+                                 |}
+                     |}
+              end
+            else None
           end
         | nil => None (** Stack underflow *)
         | _ => None
@@ -252,18 +254,20 @@ Function new (clid:class_id) (heap:Heap) : option (heap_idx * Heap) :=
         | (Vint hpidx) :: v :: stack' =>
           match Dico.find hpidx s.(heap) with
           | None => None (** adresse inconnue, objet non alloué *)
-          | Some {| objclass:= objcl; objfields:= flds |}=>
-            let newflds := {| objclass:= objcl;
-                              objfields:=Dico.add namefld v flds |} in
-            let newheap := Dico.add hpidx newflds s.(heap) in
-            Some {| framestack := s.(framestack);
-                    heap := newheap;
-                    frame := {| mdef:=s.(frame).(mdef) ;
-                                regs:= s.(frame).(regs);
-                                pc:= pc+1;
-                                stack:= stack'
-                             |}
-                 |}
+          | Some {| objclass:= objcl; objfields:= flds |} =>
+            if Nat.eqb objcl cl then
+              let newflds := {| objclass:= cl;
+                                objfields:=Dico.add namefld v flds |} in
+              let newheap := Dico.add hpidx newflds s.(heap) in
+              Some {| framestack := s.(framestack);
+                      heap := newheap;
+                      frame := {| mdef:=s.(frame).(mdef) ;
+                                  regs:= s.(frame).(regs);
+                                  pc:= pc+1;
+                                  stack:= stack'
+                               |}
+                   |}
+            else None
           end
         | nil | _ :: nil => None (** Stack underflow *)
         | _ :: _ => None
